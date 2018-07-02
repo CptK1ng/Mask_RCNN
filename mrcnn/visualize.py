@@ -19,7 +19,7 @@ from skimage.measure import find_contours
 import matplotlib.pyplot as plt
 from matplotlib import patches,  lines
 from matplotlib.patches import Polygon
-import IPython.display
+#import IPython.display
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -460,7 +460,8 @@ def draw_boxes(image, boxes=None, refined_boxes=None,
                 ax.add_patch(p)
     ax.imshow(masked_image.astype(np.uint8))
 
-
+# Not used anymore
+'''
 def display_table(table):
     """Display values in a table format.
     table: an iterable of rows, and each row is an iterable of values.
@@ -473,7 +474,7 @@ def display_table(table):
         html += "<tr>" + row_html + "</tr>"
     html = "<table>" + html + "</table>"
     IPython.display.display(IPython.display.HTML(html))
-
+'''
 
 def display_weight_stats(model):
     """Scans all the weights in the model and returns a list of tuples
