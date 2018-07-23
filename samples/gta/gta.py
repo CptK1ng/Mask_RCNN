@@ -7,6 +7,8 @@ import urllib.request
 import shutil
 import samples.gta.gta_classes as gc
 import skimage
+from mrcnn import visualize
+import cv2
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
@@ -21,10 +23,11 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
 # Local path to trained weights file
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
-GTA_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\inst")
-GTA_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\img")
+GTA_TRAIN_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\inst")
+GTA_TRAIN_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\img")
 
-
+GTA_VAL_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\inst")
+GTA_VAL_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\img")
 
 
 class GTAConfig(Config):
@@ -43,7 +46,7 @@ class GTAConfig(Config):
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 30  # CITYSCAPES has 80 classes
+    NUM_CLASSES = 1 + 30  # gta dataset has 30 classes
 
     # Learning rate and momentum
     # The Mask RCNN paper uses lr=0.02, but on TensorFlow it causes
@@ -63,20 +66,22 @@ config.display()
 
 class GTADataset(utils.Dataset):
 
-    def load_gta(self, class_ids=None):
-
+    def load_gta(self, class_ids=None, dataset=None):
+        id = 0
+        path_to_dataset = ""
         for class_id in gc.labels:
             self.add_class("gta", class_id.id, class_id.name)
-        for root, dirs, files in os.walk(GTA_IMAGE_PATH):
-            '''
-            for name in files:                
-                self.add_image("gta",image_id=os.path.join(root, name))
-                i += 1
-            '''
-            path = root.split(os.sep)
+
+        if dataset == "training":
+            path_to_dataset = GTA_TRAIN_IMAGE_PATH
+        elif dataset == "validation":
+            path_to_dataset == GTA_VAL_IMAGE_PATH
+
+        for root, dirs, files in os.walk(path_to_dataset):
             dir_path = os.path.abspath(root)
             for file in files:
-                self.add_image("gta", image_id=(os.path.splitext(file)[0]), path=os.path.join(dir_path, file))
+                id += 1
+                self.add_image("gta", image_id=id, path=os.path.join(dir_path, file))
 
     def load_image(self, image_id):
         """Load the specified image and return a [H,W,3] Numpy array.
@@ -92,18 +97,16 @@ class GTADataset(utils.Dataset):
         return image
 
     def load_mask(self, image_id):
-        tmp_img_id = self.image_info[image_id]
-        mask = skimage.io.imread(GTA_MASKS_PATH + str(tmp_img_id)[:3] + str(tmp_img_id))
-        self.extracting_object_instances_from_image(mask=mask)
+        mask = skimage.io.imread(((self.image_info[image_id])['path'].replace('img', 'inst')).replace('jpg', 'png'))
+        return self.extracting_object_instances_from_image(mask=mask)
 
     def extracting_object_instances_from_image(self, mask):
-        '''
+        """
 
         :param mask: Input Mask,encoded as array of shape (height, with, 3 (RGB)) first channel (R) encodes the class ID,
-         and the two remaining channels encode the instance ID (= 256 * G + B).
-        :return:  class_ids: of all found object and
+        :return: class_ids: of all found object and
                   masks: of these with shape (height, width, num_of_instances)
-        '''
+        """
 
         objects_on_img = list()
         list_of_masks = list()
@@ -113,15 +116,15 @@ class GTADataset(utils.Dataset):
             column_no = 0
             for column in row:
                 # New Object found
-                if column_no[0] != 0 and column_no not in objects_on_img:
-                    list_of_masks.append(np.empty(np.shape(mask)))
-                    class_ids.append(column_no[0])
-                    objects_on_img.append(column_no)
+                if column[0] != 0 and hash(frozenset(column)) not in objects_on_img:
+                    list_of_masks.append(np.empty((np.shape(mask)[0], np.shape(mask)[1])))
+                    class_ids.append(column[0] + 1)
+                    objects_on_img.append(hash(frozenset(column)))
                 # Object already detected
-                if column_no[0] != 0 and column_no in objects_on_img:
+                if column[0] != 0 and hash(frozenset(column)) in objects_on_img:
                     # Get the index of the depending mask and set it at (row_no|column_no) to 1
-                    (list_of_masks[objects_on_img.index(column_no)])[row_no][column_no] = 1
-
+                    (list_of_masks[objects_on_img.index(hash(frozenset(column)))])[row_no][column_no] = 1
+                # print("({}|{})".format(column_no, row_no))
                 column_no += 1
             row_no += 1
         first_arr = True
@@ -131,15 +134,52 @@ class GTADataset(utils.Dataset):
                 masks = arr.astype(bool)
                 first_arr = False
             else:
-                np.dstack((masks, arr.astype(bool)))
+                masks = np.dstack((masks, arr.astype(bool)))
 
-        return class_ids, masks
+        return masks, class_ids
 
         # Cannot specify end of Iterations
 
 
+dataset_train = GTADataset()
+dataset_train.load_gta(dataset="training")
+dataset_train.prepare()
 
-config = GTADataset()
-config.load_gta("001_00001")
-config.load_image("001_00001")
-config.load_mask("001_00001")
+dataset_val = GTADataset()
+dataset_val.load_gta(dataset="validation")
+dataset_val.prepare()
+
+image_ids = np.random.choice(dataset_train.image_ids, 4)
+for image_id in image_ids:
+    image = dataset_train.load_image(image_id)
+    cv2.imshow("window", image)
+    mask, class_ids = dataset_train.load_mask(image_id)
+    visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+
+# Create model in training mode
+model = modellib.MaskRCNN(mode="training", config=config, model_dir=MODEL_DIR)
+
+# Which weights to start with?
+init_with = "coco"  # imagenet, coco, or last
+
+if init_with == "imagenet":
+    model.load_weights(model.get_imagenet_weights(), by_name=True)
+elif init_with == "coco":
+    # Load weights trained on MS COCO, but skip layers that
+    # are different due to the different number of classes
+    # See README for instructions to download the COCO weights
+    model.load_weights(COCO_MODEL_PATH, by_name=True,
+                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                "mrcnn_bbox", "mrcnn_mask"])
+elif init_with == "last":
+    # Load the last model you trained and continue training
+    model.load_weights(model.find_last(), by_name=True)
+
+# Train the head branches
+# Passing layers="heads" freezes all layers except the head
+# layers. You can also pass a regular expression to select
+# which layers to train by name pattern.
+model.train(dataset_train, dataset_val,
+            learning_rate=config.LEARNING_RATE,
+            epochs=10,
+            layers='heads')
