@@ -5,7 +5,7 @@ import numpy as np
 import zipfile
 import urllib.request
 import shutil
-import samples.gta.gta_classes as gc
+import gta_classes as gc
 import skimage
 from mrcnn import visualize
 import cv2
@@ -23,12 +23,21 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
 # Local path to trained weights file
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+
+#WINDOWS
+"""
 GTA_TRAIN_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\inst")
 GTA_TRAIN_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\img")
 
 GTA_VAL_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\inst")
 GTA_VAL_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\img")
+"""
 
+GTA_TRAIN_MASKS_PATH ="/home/koffi/Projects/gta data/train/inst"
+GTA_TRAIN_IMAGE_PATH ="/home/koffi/Projects/gta data/train/img"
+
+GTA_VAL_MASKS_PATH ="/home/koffi/Projects/gta data/val/inst"
+GTA_VAL_IMAGE_PATH = "/home/koffi/Projects/gta data/val/img"
 
 class GTAConfig(Config):
     """Configuration for training on MS COCO.
@@ -46,7 +55,9 @@ class GTAConfig(Config):
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 30  # gta dataset has 30 classes
+    NUM_CLASSES = 1 + 32  # gta dataset has 30 classes
+
+    STEPS_PER_EPOCH = 15
 
     # Learning rate and momentum
     # The Mask RCNN paper uses lr=0.02, but on TensorFlow it causes
@@ -135,7 +146,7 @@ class GTADataset(utils.Dataset):
                 first_arr = False
             else:
                 masks = np.dstack((masks, arr.astype(bool)))
-
+        class_ids = np.asarray(class_ids)
         return masks, class_ids
 
         # Cannot specify end of Iterations
@@ -148,14 +159,14 @@ dataset_train.prepare()
 dataset_val = GTADataset()
 dataset_val.load_gta(dataset="validation")
 dataset_val.prepare()
-
+'''
 image_ids = np.random.choice(dataset_train.image_ids, 4)
 for image_id in image_ids:
     image = dataset_train.load_image(image_id)
     cv2.imshow("window", image)
     mask, class_ids = dataset_train.load_mask(image_id)
     visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
-
+'''
 # Create model in training mode
 model = modellib.MaskRCNN(mode="training", config=config, model_dir=MODEL_DIR)
 

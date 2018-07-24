@@ -19,11 +19,13 @@ import numpy as np
 import skimage.transform
 import tensorflow as tf
 #----------------Restricitng GPU to 30% -------------
+'''
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.3
 config.gpu_options.visible_device_list = "0"
 set_session(tf.Session(config=config))
+'''
 import keras
 import keras.backend as K
 import keras.layers as KL
@@ -2355,7 +2357,7 @@ class MaskRCNN():
             validation_steps=self.config.VALIDATION_STEPS,
             max_queue_size=100,
             workers=workers,
-            use_multiprocessing=True,
+            use_multiprocessing=False,
         )
         self.epoch = max(self.epoch, epochs)
 
