@@ -24,7 +24,7 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 # Local path to trained weights file
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
-#WINDOWS
+# WINDOWS
 """
 GTA_TRAIN_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\inst")
 GTA_TRAIN_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\img")
@@ -33,11 +33,12 @@ GTA_VAL_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\inst")
 GTA_VAL_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\img")
 """
 
-GTA_TRAIN_MASKS_PATH ="/home/koffi/Projects/gta data/train/inst"
-GTA_TRAIN_IMAGE_PATH ="/home/koffi/Projects/gta data/train/img"
+GTA_TRAIN_MASKS_PATH = "/home/koffi/Projects/gta data/train/inst"
+GTA_TRAIN_IMAGE_PATH = "/home/koffi/Projects/gta data/train/img"
 
-GTA_VAL_MASKS_PATH ="/home/koffi/Projects/gta data/val/inst"
+GTA_VAL_MASKS_PATH = "/home/koffi/Projects/gta data/val/inst"
 GTA_VAL_IMAGE_PATH = "/home/koffi/Projects/gta data/val/img"
+
 
 class GTAConfig(Config):
     """Configuration for training on MS COCO.
@@ -76,7 +77,6 @@ config.display()
 ############################################################
 
 class GTADataset(utils.Dataset):
-
     def load_gta(self, class_ids=None, dataset=None):
         id = 0
         path_to_dataset = ""
@@ -86,7 +86,7 @@ class GTADataset(utils.Dataset):
         if dataset == "training":
             path_to_dataset = GTA_TRAIN_IMAGE_PATH
         elif dataset == "validation":
-            path_to_dataset == GTA_VAL_IMAGE_PATH
+            path_to_dataset = GTA_VAL_IMAGE_PATH
 
         for root, dirs, files in os.walk(path_to_dataset):
             dir_path = os.path.abspath(root)
