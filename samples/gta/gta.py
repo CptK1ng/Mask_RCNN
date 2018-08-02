@@ -9,6 +9,7 @@ import gta_classes as gc
 import skimage
 from mrcnn import visualize
 import cv2
+import random
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
@@ -25,20 +26,20 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
 # WINDOWS
-"""
+
 GTA_TRAIN_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\inst")
 GTA_TRAIN_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\train\\img")
 
 GTA_VAL_MASKS_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\inst")
 GTA_VAL_IMAGE_PATH = os.path.join(ROOT_DIR, "..\\gta_data\\val\\img")
-"""
 
+"""
 GTA_TRAIN_MASKS_PATH = "/home/koffi/Projects/gta data/train/inst"
 GTA_TRAIN_IMAGE_PATH = "/home/koffi/Projects/gta data/train/img"
 
 GTA_VAL_MASKS_PATH = "/home/koffi/Projects/gta data/val/inst"
 GTA_VAL_IMAGE_PATH = "/home/koffi/Projects/gta data/val/img"
-
+"""
 
 class GTAConfig(Config):
     """Configuration for training on MS COCO.
@@ -56,9 +57,11 @@ class GTAConfig(Config):
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 32  # gta dataset has 30 classes
+    NUM_CLASSES = 32  # gta dataset has 30 classes
 
     STEPS_PER_EPOCH = 15
+
+    DETECTION_MIN_CONFIDENCE = 0.3
 
     # Learning rate and momentum
     # The Mask RCNN paper uses lr=0.02, but on TensorFlow it causes
@@ -105,11 +108,17 @@ class GTADataset(utils.Dataset):
         # If has an alpha channel, remove it for consistency
         if image.shape[-1] == 4:
             image = image[..., :3]
+
+        cv2.imshow("Image", image)
+        skimage.io.imshow(image)
         return image
 
     def load_mask(self, image_id):
         mask = skimage.io.imread(((self.image_info[image_id])['path'].replace('img', 'inst')).replace('jpg', 'png'))
         return self.extracting_object_instances_from_image(mask=mask)
+
+    def image_reference(self, image_id):
+        return self.image_info[image_id]['path']
 
     def extracting_object_instances_from_image(self, mask):
         """
@@ -129,7 +138,7 @@ class GTADataset(utils.Dataset):
                 # New Object found
                 if column[0] != 0 and hash(frozenset(column)) not in objects_on_img:
                     list_of_masks.append(np.empty((np.shape(mask)[0], np.shape(mask)[1])))
-                    class_ids.append(column[0] + 1)
+                    class_ids.append(column[0])
                     objects_on_img.append(hash(frozenset(column)))
                 # Object already detected
                 if column[0] != 0 and hash(frozenset(column)) in objects_on_img:
@@ -147,50 +156,51 @@ class GTADataset(utils.Dataset):
             else:
                 masks = np.dstack((masks, arr.astype(bool)))
         class_ids = np.asarray(class_ids)
-        return masks, class_ids
+        return masks.astype(np.bool), class_ids.astype(np.int32)
 
         # Cannot specify end of Iterations
 
 
-dataset_train = GTADataset()
-dataset_train.load_gta(dataset="training")
-dataset_train.prepare()
 
-dataset_val = GTADataset()
-dataset_val.load_gta(dataset="validation")
-dataset_val.prepare()
-'''
-image_ids = np.random.choice(dataset_train.image_ids, 4)
-for image_id in image_ids:
-    image = dataset_train.load_image(image_id)
-    cv2.imshow("window", image)
-    mask, class_ids = dataset_train.load_mask(image_id)
-    visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
-'''
-# Create model in training mode
-model = modellib.MaskRCNN(mode="training", config=config, model_dir=MODEL_DIR)
+    def train_gta(self):
+        dataset_train = GTADataset()
+        dataset_train.load_gta(dataset="training")
+        dataset_train.prepare()
 
-# Which weights to start with?
-init_with = "coco"  # imagenet, coco, or last
+        dataset_val = GTADataset()
+        dataset_val.load_gta(dataset="validation")
+        dataset_val.prepare()
 
-if init_with == "imagenet":
-    model.load_weights(model.get_imagenet_weights(), by_name=True)
-elif init_with == "coco":
-    # Load weights trained on MS COCO, but skip layers that
-    # are different due to the different number of classes
-    # See README for instructions to download the COCO weights
-    model.load_weights(COCO_MODEL_PATH, by_name=True,
-                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
-                                "mrcnn_bbox", "mrcnn_mask"])
-elif init_with == "last":
-    # Load the last model you trained and continue training
-    model.load_weights(model.find_last(), by_name=True)
 
-# Train the head branches
-# Passing layers="heads" freezes all layers except the head
-# layers. You can also pass a regular expression to select
-# which layers to train by name pattern.
-model.train(dataset_train, dataset_val,
-            learning_rate=config.LEARNING_RATE,
-            epochs=10,
-            layers='heads')
+        # Create model in training mode
+        model = modellib.MaskRCNN(mode="training", config=config, model_dir=MODEL_DIR)
+
+        # Which weights to start with?
+        init_with = "coco"  # imagenet, coco, or last
+
+        if init_with == "imagenet":
+            model.load_weights(model.get_imagenet_weights(), by_name=True)
+        elif init_with == "coco":
+            # Load weights trained on MS COCO, but skip layers that
+            # are different due to the different number of classes
+            # See README for instructions to download the COCO weights
+            model.load_weights(COCO_MODEL_PATH, by_name=True,
+                               exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                        "mrcnn_bbox", "mrcnn_mask"])
+        elif init_with == "last":
+            # Load the last model you trained and continue training
+            model.load_weights(model.find_last(), by_name=True)
+
+        # Train the head branches
+        # Passing layers="heads" freezes all layers except the head
+        # layers. You can also pass a regular expression to select
+        # which layers to train by name pattern.
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=10,
+                    layers='heads')
+
+
+gta_data = GTADataset()
+gta_data.load_gta()
+gta_data.train_gta()
