@@ -1,0 +1,106 @@
+2018-07-27 09:57:06.507759: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 AVX512F FMA
+2018-07-27 09:57:06.709146: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1392] Found device 0 with properties: 
+name: GeForce GTX 1080 Ti major: 6 minor: 1 memoryClockRate(GHz): 1.607
+pciBusID: 0000:65:00.0
+totalMemory: 10.91GiB freeMemory: 10.26GiB
+2018-07-27 09:57:06.709184: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1471] Adding visible gpu devices: 0
+2018-07-27 09:57:07.627177: I tensorflow/core/common_runtime/gpu/gpu_device.cc:952] Device interconnect StreamExecutor with strength 1 edge matrix:
+2018-07-27 09:57:07.627264: I tensorflow/core/common_runtime/gpu/gpu_device.cc:958]      0 
+2018-07-27 09:57:07.627281: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971] 0:   N 
+2018-07-27 09:57:07.628054: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1084] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 9924 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1080 Ti, pci bus id: 0000:65:00.0, compute capability: 6.1)
+2018-07-27 09:57:09.918903: W tensorflow/core/framework/allocator.cc:108] Allocation of 51380224 exceeds 10% of system memory.
+2018-07-27 09:57:09.996816: W tensorflow/core/framework/allocator.cc:108] Allocation of 51380224 exceeds 10% of system memory.
+Using TensorFlow backend.
+
+Configurations:
+BACKBONE                       resnet101
+BACKBONE_STRIDES               [4, 8, 16, 32, 64]
+BATCH_SIZE                     1
+BBOX_STD_DEV                   [0.1 0.1 0.2 0.2]
+COMPUTE_BACKBONE_SHAPE         None
+DETECTION_MAX_INSTANCES        100
+DETECTION_MIN_CONFIDENCE       0.7
+DETECTION_NMS_THRESHOLD        0.3
+FPN_CLASSIF_FC_LAYERS_SIZE     1024
+GPU_COUNT                      1
+GRADIENT_CLIP_NORM             5.0
+IMAGES_PER_GPU                 1
+IMAGE_MAX_DIM                  1024
+IMAGE_META_SIZE                45
+IMAGE_MIN_DIM                  800
+IMAGE_MIN_SCALE                0
+IMAGE_RESIZE_MODE              square
+IMAGE_SHAPE                    [1024 1024    3]
+LEARNING_MOMENTUM              0.9
+LEARNING_RATE                  0.0001
+LOSS_WEIGHTS                   {'mrcnn_bbox_loss': 1.0, 'mrcnn_mask_loss': 1.0, 'rpn_bbox_loss': 1.0, 'rpn_class_loss': 1.0, 'mrcnn_class_loss': 1.0}
+MASK_POOL_SIZE                 14
+MASK_SHAPE                     [28, 28]
+MAX_GT_INSTANCES               100
+MEAN_PIXEL                     [123.7 116.8 103.9]
+MINI_MASK_SHAPE                (56, 56)
+NAME                           gta
+NUM_CLASSES                    33
+POOL_SIZE                      7
+POST_NMS_ROIS_INFERENCE        1000
+POST_NMS_ROIS_TRAINING         2000
+ROI_POSITIVE_RATIO             0.33
+RPN_ANCHOR_RATIOS              [0.5, 1, 2]
+RPN_ANCHOR_SCALES              (32, 64, 128, 256, 512)
+RPN_ANCHOR_STRIDE              1
+RPN_BBOX_STD_DEV               [0.1 0.1 0.2 0.2]
+RPN_NMS_THRESHOLD              0.7
+RPN_TRAIN_ANCHORS_PER_IMAGE    256
+STEPS_PER_EPOCH                50
+TOP_DOWN_PYRAMID_SIZE          256
+TRAIN_BN                       False
+TRAIN_ROIS_PER_IMAGE           200
+USE_MINI_MASK                  True
+USE_RPN_ROIS                   True
+VALIDATION_STEPS               20
+WEIGHT_DECAY                   0.0001
+
+
+Traceback (most recent call last):
+  File "gta.py", line 207, in <module>
+    layers='heads')
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/mask_rcnn-2.1-py3.5.egg/mrcnn/model.py", line 2331, in train
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/keras/callbacks.py", line 709, in __init__
+    from tensorflow.contrib.tensorboard.plugins import projector
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/__init__.py", line 39, in <module>
+    from tensorflow.contrib import distributions
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/distributions/__init__.py", line 40, in <module>
+    from tensorflow.contrib.distributions.python.ops.estimator import *
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/distributions/python/ops/estimator.py", line 21, in <module>
+    from tensorflow.contrib.learn.python.learn.estimators.head import _compute_weighted_loss
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/learn/__init__.py", line 95, in <module>
+    from tensorflow.contrib.learn.python.learn import *
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/learn/python/__init__.py", line 28, in <module>
+    from tensorflow.contrib.learn.python.learn import *
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/learn/python/learn/__init__.py", line 28, in <module>
+    from tensorflow.contrib.learn.python.learn import basic_session_run_hooks
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/contrib/learn/python/learn/basic_session_run_hooks.py", line 41, in <module>
+    basic_session_run_hooks.CheckpointSaverHook)
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/python/util/deprecation.py", line 147, in deprecated_alias
+    class NewClass(func_or_class):  # pylint: disable=missing-docstring
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/python/util/deprecation.py", line 154, in NewClass
+    __module__ = _call_location(outer=True)
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/python/util/deprecation.py", line 73, in _call_location
+    frame = tf_inspect.currentframe()
+  File "/home/koffi/Projects/Mask_RCNN/venv/lib/python3.5/site-packages/tensorflow/python/util/tf_inspect.py", line 42, in currentframe
+    return _inspect.stack()[1][0]
+  File "/usr/lib/python3.5/inspect.py", line 1464, in stack
+    return getouterframes(sys._getframe(1), context)
+  File "/usr/lib/python3.5/inspect.py", line 1441, in getouterframes
+    frameinfo = (frame,) + getframeinfo(frame, context)
+  File "/usr/lib/python3.5/inspect.py", line 1414, in getframeinfo
+    lines, lnum = findsource(frame)
+  File "/usr/lib/python3.5/inspect.py", line 744, in findsource
+    file = getsourcefile(object)
+  File "/usr/lib/python3.5/inspect.py", line 672, in getsourcefile
+    if getattr(getmodule(object, filename), '__loader__', None) is not None:
+  File "/usr/lib/python3.5/inspect.py", line 709, in getmodule
+    if ismodule(module) and hasattr(module, '__file__'):
+  File "/usr/lib/python3.5/inspect.py", line 63, in ismodule
+    def ismodule(object):
+KeyboardInterrupt

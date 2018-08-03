@@ -254,7 +254,9 @@ class Dataset(object):
         self._image_ids = []
         self.image_info = []
         # Background is always the first class
-        self.class_info = [{"source": "", "id": 0, "name": "BG"}]
+        #self.class_info = [{"source": "", "id": 0, "name": "BG"}]
+        self.class_info = []
+
         self.source_class_ids = {}
 
     def add_class(self, source, class_id, class_name):
@@ -512,16 +514,17 @@ def resize_mask(mask, scale, padding, crop=None):
     """
     # Suppress warning from scipy 0.13.0, the output shape of zoom() is
     # calculated with round() instead of int()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        if mask.ndim == 3:
-            mask = scipy.ndimage.zoom(mask, zoom=[scale, scale,1 ], order=0)
-    if crop is not None:
-        y, x, h, w = crop
-        mask = mask[y:y + h, x:x + w]
-    else:
-        if mask.ndim == 3:
-            mask = np.pad(mask, padding, mode='constant', constant_values=0)
+    if mask is not None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            if mask.ndim == 3:
+                mask = scipy.ndimage.zoom(mask, zoom=[scale, scale,1 ], order=0)
+        if crop is not None:
+            y, x, h, w = crop
+            mask = mask[y:y + h, x:x + w]
+        else:
+            if mask.ndim == 3:
+                mask = np.pad(mask, padding, mode='constant', constant_values=0)
     return mask
 
 
