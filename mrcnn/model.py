@@ -18,7 +18,8 @@ import multiprocessing
 import numpy as np
 import skimage.transform
 import tensorflow as tf
-#----------------Restricitng GPU to 30% -------------
+
+# ----------------Restricitng GPU to 30% -------------
 '''
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
@@ -36,6 +37,7 @@ from mrcnn import utils
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
 from distutils.version import LooseVersion
+
 assert LooseVersion(tf.__version__) >= LooseVersion("1.3")
 assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
 
@@ -66,6 +68,7 @@ class BatchNorm(KL.BatchNormalization):
     so this layer is often frozen (via setting in Config class) and functions
     as linear layer.
     """
+
     def call(self, inputs, training=None):
         """
         Note about training values:
@@ -89,8 +92,8 @@ def compute_backbone_shapes(config, image_shape):
     assert config.BACKBONE in ["resnet50", "resnet101"]
     return np.array(
         [[int(math.ceil(image_shape[0] / stride)),
-            int(math.ceil(image_shape[1] / stride))]
-            for stride in config.BACKBONE_STRIDES])
+          int(math.ceil(image_shape[1] / stride))]
+         for stride in config.BACKBONE_STRIDES])
 
 
 ############################################################
@@ -164,7 +167,7 @@ def conv_block(input_tensor, kernel_size, filters, stage, block,
     x = KL.Activation('relu')(x)
 
     x = KL.Conv2D(nb_filter3, (1, 1), name=conv_name_base +
-                  '2c', use_bias=use_bias)(x)
+                                           '2c', use_bias=use_bias)(x)
     x = BatchNorm(name=bn_name_base + '2c')(x, training=train_bn)
 
     shortcut = KL.Conv2D(nb_filter3, (1, 1), strides=strides,
@@ -2035,7 +2038,7 @@ class MaskRCNN():
         else:
             # Network Heads
             # Proposal classifier and BBox regressor heads
-            mrcnn_class_logits, mrcnn_class, mrcnn_bbox =\
+            mrcnn_class_logits, mrcnn_class, mrcnn_bbox = \
                 fpn_classifier_graph(rpn_rois, mrcnn_feature_maps, input_image_meta,
                                      config.POOL_SIZE, config.NUM_CLASSES,
                                      train_bn=config.TRAIN_BN,
@@ -2057,7 +2060,7 @@ class MaskRCNN():
 
             model = KM.Model([input_image, input_image_meta, input_anchors],
                              [detections, mrcnn_class, mrcnn_bbox,
-                                 mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
+                              mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
                              name='mask_rcnn')
 
         # Add multi-GPU support.
@@ -2161,9 +2164,9 @@ class MaskRCNN():
         """
         # Optimizer object
 
-        #optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum, nesterov=True, )
+        optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum, nesterov=True)
 
-        optimizer = keras.optimizers.Adam(lr=0.0005, decay=0.0)
+        # optimizer = keras.optimizers.Adam(lr=0.0005, decay=0.0)
 
         # Add Losses
         # First, clear previously set losses to avoid duplication
@@ -2282,7 +2285,6 @@ class MaskRCNN():
             self.config.NAME.lower()))
         self.checkpoint_path = self.checkpoint_path.replace(
             "*epoch*", "{epoch:04d}")
-
 
     def train(self, train_dataset, val_dataset, learning_rate, epochs, layers,
               augmentation=None):

@@ -54,12 +54,12 @@ class GTAConfig(Config):
     # Number of classes (including background)
     NUM_CLASSES = 32  # gta dataset has 32 classes
 
-    STEPS_PER_EPOCH = 200
+    STEPS_PER_EPOCH = 150
 
     # Number of validation steps to run at the end of every training epoch.
     # A bigger number improves accuracy of validation stats, but slows
     # down the training.
-    VALIDATION_STEPS = 40
+    VALIDATION_STEPS = 35
 
     # If enabled, resizes instance masks to a smaller size to reduce
     # memory load. Recommended when using high-resolution images.
@@ -75,7 +75,7 @@ class GTAConfig(Config):
     # The Mask RCNN paper uses lr=0.02, but on TensorFlow it causes
     # weights to explode. Likely due to differences in optimzer
     # implementation.
-    LEARNING_RATE = 0.0005
+    LEARNING_RATE = 0.002
     LEARNING_MOMENTUM = 0.9
 
     WEIGHT_DECAY = 0.0005
@@ -84,7 +84,7 @@ class GTAConfig(Config):
         "rpn_class_loss": 1.,
         "rpn_bbox_loss": 1.,
         "mrcnn_class_loss": 1.,
-        "mrcnn_bbox_loss": 10.,
+        "mrcnn_bbox_loss": 1.,
         "mrcnn_mask_loss": 1.
     }
 
@@ -129,20 +129,7 @@ class GTADataset(utils.Dataset):
 
     def load_mask(self, image_id):
         mask = skimage.io.imread(((self.image_info[image_id])['path'].replace('img', 'inst')).replace('jpg', 'png'))
-        return self.extracting_object_instances_from_image(mask=mask)
-
-    def image_reference(self, image_id):
-        return self.image_info[image_id]['path']
-
-    def extracting_object_instances_from_image(self, mask):
-        """
-
-        :param mask: Input Mask,encoded as array of shape (height, with, 3 (RGB)) first channel (R) encodes the class ID,
-        :return: class_ids: of all found object and
-                  masks: of these with shape (height, width, num_of_instances)
-        """
-
-        objects_on_img = list()
+        hash_of_objects_on_img = list()
         list_of_masks = list()
         class_ids = list()
         id, row_no = 0, 0
@@ -150,14 +137,14 @@ class GTADataset(utils.Dataset):
             column_no = 0
             for column in row:
                 # New Object found
-                if column[0] != 0 and hash(frozenset(column)) not in objects_on_img:
-                    list_of_masks.append(np.empty((np.shape(mask)[0], np.shape(mask)[1])))
+                if column[0] != 0 and hash(frozenset(column)) not in hash_of_objects_on_img:
+                    list_of_masks.append(np.zeros((np.shape(mask)[0], np.shape(mask)[1])))
                     class_ids.append(column[0])
-                    objects_on_img.append(hash(frozenset(column)))
+                    hash_of_objects_on_img.append(hash(frozenset(column)))
                 # Object already detected
-                if column[0] != 0 and hash(frozenset(column)) in objects_on_img:
+                if column[0] != 0 and hash(frozenset(column)) in hash_of_objects_on_img:
                     # Get the index of the depending mask and set it at (row_no|column_no) to 1
-                    (list_of_masks[objects_on_img.index(hash(frozenset(column)))])[row_no][column_no] = 1
+                    (list_of_masks[hash_of_objects_on_img.index(hash(frozenset(column)))])[row_no][column_no] = 1
                 # print("({}|{})".format(column_no, row_no))
                 column_no += 1
             row_no += 1
@@ -172,8 +159,8 @@ class GTADataset(utils.Dataset):
         class_ids = np.asarray(class_ids)
         return masks.astype(np.bool), class_ids.astype(np.int32)
 
-        # Cannot specify end of Iterations
-
+    def image_reference(self, image_id):
+        return self.image_info[image_id]['path']
 
 
     def train_gta(self):
@@ -211,7 +198,7 @@ class GTADataset(utils.Dataset):
         # which layers to train by name pattern.
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE,
-                    epochs=200,
+                    epochs=50,
                     layers='heads')
 
 
