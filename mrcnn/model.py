@@ -2164,8 +2164,8 @@ class MaskRCNN():
         """
         # Optimizer object
 
-        optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum, nesterov=True)
-
+        #optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum, nesterov=True)
+        keras.optimizers.Adagrad(lr=0.01, epsilon=1e-6)
         # optimizer = keras.optimizers.Adam(lr=0.0005, decay=0.0)
 
         # Add Losses
