@@ -59,7 +59,7 @@ class GTAConfig(Config):
     # Number of validation steps to run at the end of every training epoch.
     # A bigger number improves accuracy of validation stats, but slows
     # down the training.
-    VALIDATION_STEPS = 35
+    VALIDATION_STEPS = 30
 
     # If enabled, resizes instance masks to a smaller size to reduce
     # memory load. Recommended when using high-resolution images.
@@ -198,10 +198,11 @@ class GTADataset(utils.Dataset):
         # which layers to train by name pattern.
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE,
-                    epochs=50,
+                    epochs=150,
                     layers='heads')
 
-
+'''
 gta_data = GTADataset()
 gta_data.load_gta()
 gta_data.train_gta()
+'''
