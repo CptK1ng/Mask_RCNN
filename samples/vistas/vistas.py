@@ -47,12 +47,12 @@ class VistasConfig(Config):
     # Number of classes (including background)
     NUM_CLASSES = 66  # gta dataset has 32 classes
 
-    STEPS_PER_EPOCH = 50
+    STEPS_PER_EPOCH = 150
 
     # Number of validation steps to run at the end of every training epoch.
     # A bigger number improves accuracy of validation stats, but slows
     # down the training.
-    VALIDATION_STEPS = 10
+    VALIDATION_STEPS = 40
 
     # If enabled, resizes instance masks to a smaller size to reduce
     # memory load. Recommended when using high-resolution images.
@@ -70,7 +70,11 @@ class VistasConfig(Config):
     # implementation.
     LEARNING_RATE = 0.002
     LEARNING_MOMENTUM = 0.9
-    DETECTION_MIN_CONFIDENCE = 0.5
+    DETECTION_MIN_CONFIDENCE = 0.7
+
+    # Ratios of anchors at each cell (width/height)
+    # A value of 1 represents a square anchor, and 0.5 is a wide anchor
+    RPN_ANCHOR_RATIOS = [0.5, 1, 2]
 
     WEIGHT_DECAY = 0.0005
 
@@ -190,19 +194,38 @@ class VistasDataset(utils.Dataset):
                                         "mrcnn_bbox", "mrcnn_mask"])
         elif init_with == "last":
             # Load the last model you trained and continue training
-            model.load_weights(model.find_last(), by_name=True)
+            model.load_weights("/home/koffi/Projects/Mask_RCNN/logs/vistas20180913T1754/mask_rcnn_vistas_0031.h5", by_name=True)
 
         # Train the head branches
         # Passing layers="heads" freezes all layers except the head
         # layers. You can also pass a regular expression to select
         # which layers to train by name pattern.
+        # Training - Stage 1
+
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE,
-                    epochs=100,
+                    epochs=10,
                     layers='heads')
 
-'''
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=25,
+                    layers='heads')
+        # Training - Stage 2
+        # Finetune layers from ResNet stage 4 and up
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=10,
+                    layers='4+')
+
+        # Training - Stage 3
+        # Fine tune all layers
+        print("Fine tune all layers")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE / 10,
+                    epochs=10,
+                    layers='all')
+
 vistas_data = VistasDataset()
-# vistas_data.load_vistas()
 vistas_data.train_vistas()
-'''
+
